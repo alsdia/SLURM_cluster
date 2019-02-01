@@ -1,0 +1,8 @@
+it would be convenient to create a more general script where 
+1) the slurm version is automatically downloaded 
+wget https://download.schedmd.com/slurm/slurm-17.**.*.tar.bz2
+2) export and variable VER so that you don't need to change manually all the versions of slurm package. 
+like for example is done in 
+export VER=17.11.7
+yum install slurm-$VER*rpm slurm-devel-$VER*rpm slurm-perlapi-$VER*rpm slurm-torque-$VER*rpm slurm-example-configs-$VER*rpm
+https://wiki.fysik.dtu.dk/niflheim/Slurm_installation
