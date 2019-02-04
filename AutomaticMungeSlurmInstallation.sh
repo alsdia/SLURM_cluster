@@ -11,19 +11,11 @@
 # Y8a     a8P 88         Y8a.    .a8P 88     `8b  88    `888'    88 88,   ,d88 88b,   ,a8"
 #  "Y88888P"  88888888888 `"Y8888Y"'  88      `8b 88     `8'     88  "Y8888P"  88`YbbdP"' 
 #                                                                              88         
+#
 #                                                                              88    
+# version: 0.3 / date: 20190205 
 
-# version: 0.2 date: 20190204 
-
-# Description : this is an automatic script built from the following sources:
-# A) SCTL alain cady scripts 
-# B) slothparadise http://www.slothparadise.com/how-to-install-slurm-on-centos-7-cluster/
-# C) my alseny manual command list diary 
-# D) chen blog : http://chingchuan-chen.github.io/posts/201807/2018-07-27-installation-of-slurm.html
-# E) https://wiki.fysik.dtu.dk/niflheim/SLURM
-# This script will install automatically MUNGE and SLURM in both MASTER and COMPUTE NODES.
-
-# HOW TO LAUNCH 
+# HOW TO RUN THE PROGRAM
 # 1) log in as root in the MASTER node 
 # 2)copy this file and slurm-17.11.7.tar.bz2 into 
 #   cp slurm-17.11.7.tar.bz2 ~/
@@ -32,6 +24,19 @@
 # cd ~/
 #   chmod -R 777 AutomaticMungeSlurmInstallation*
 # ./AutomaticMungeSlurmInstallation.sh
+
+# 4) the commands used in this script suppose that the IP address are as follows: 
+
+# HOST NAME           IP ADDRESS 
+# alsenyPC1           193.168.70.206
+# workstation1        193.168.70.208
+# workstation2        193.168.70.209
+
+# 5) in case you want to launch the script with different IPs numbers: 
+# suppose you have 3 computes nodes with IP 193.168.246.121, 193.168.246.122, 193.168.246.123
+# then you need to: 
+# 	- replace all "193.168.70" with "193.168.246"
+#	- replace all "208..209" with "121..123"
 
 # in case of error and need of debugging this script
 # launch 
@@ -75,18 +80,18 @@ sed -i '/munge/d' /etc/group
 echo "Removing Previous Slurm and Munge Installations"
 # cleaning in COMPUTE nodes : 
 for i in {208..209}; do
-  ssh root@192.168.70.$i yum remove mariadb-server mariadb-devel -y
-  ssh root@192.168.70.$i yum remove slurm munge munge-libs munge-devel -y
-  ssh root@192.168.70.$i systemctl stop munge
-  ssh root@192.168.70.$i systemctl stop slurmd
-  ssh root@192.168.70.$i systemctl stop slurmctld  
-  ssh root@192.168.70.$i pkill -f munge
-  ssh root@192.168.70.$i pkill -f slurm
-  ssh root@192.168.70.$i rm -rf /var/spool/mail/munge
-  ssh root@192.168.70.$i userdel -r slurm
-  ssh root@192.168.70.$i userdel -r munge
-  ssh root@192.168.70.$i sed -i '/slurm/d' /etc/group
-  ssh root@192.168.70.$i sed -i '/munge/d' /etc/group
+  ssh root@193.168.70.$i yum remove mariadb-server mariadb-devel -y
+  ssh root@193.168.70.$i yum remove slurm munge munge-libs munge-devel -y
+  ssh root@193.168.70.$i systemctl stop munge
+  ssh root@193.168.70.$i systemctl stop slurmd
+  ssh root@193.168.70.$i systemctl stop slurmctld  
+  ssh root@193.168.70.$i pkill -f munge
+  ssh root@193.168.70.$i pkill -f slurm
+  ssh root@193.168.70.$i rm -rf /var/spool/mail/munge
+  ssh root@193.168.70.$i userdel -r slurm
+  ssh root@193.168.70.$i userdel -r munge
+  ssh root@193.168.70.$i sed -i '/slurm/d' /etc/group
+  ssh root@193.168.70.$i sed -i '/munge/d' /etc/group
 done
 
 echo "Disabling Firewall"
@@ -94,8 +99,8 @@ echo "Disabling Firewall"
 systemctl stop firewalld
 systemctl disable firewalld
 for i in {208..209}; do
-  ssh root@192.168.70.$i systemctl stop firewalld
-  ssh root@192.168.70.$i systemctl disable firewalld
+  ssh root@193.168.70.$i systemctl stop firewalld
+  ssh root@193.168.70.$i systemctl disable firewalld
 done
 
 
@@ -104,7 +109,7 @@ echo "Disabling SELINUX"
 # we use >> sed to search for "SELINUX=" line and replace it with SELINUX=disabled
 sed -i 's/SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config
 for i in {208..209}; do
-  ssh root@192.168.70.$i sed -i 's/SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config
+  ssh root@193.168.70.$i sed -i 's/SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config
 done
 
 
@@ -117,7 +122,7 @@ then
   yum -y update
   # compute nodes
   for i in {208..209}; do 
-    ssh root@192.168.70.$i yum -y update
+    ssh root@193.168.70.$i yum -y update
     echo "Yum update completed on node $i"
   done
 
@@ -133,9 +138,9 @@ then
 
   # installing optional packages in the COMPUTE NODES 
   for i in {208..209}; do
-    ssh root@192.168.70.$i yum groupinstall -y client-mgmt-tools compat-libraries debugging basic-desktop desktop-debugging desktop-platform directory-client ftp-server fonts general-desktop graphical-admin-tools input-methods internet-applications internet-browser java-platform legacy-unix legacy-x nfs-file-server network-file-system-client office-suite print-client remote-desktop-clients server-platform server-policy web-server x11 kde-desktop
-    ssh root@192.168.70.$i yum install -y xorg-x11-twm xorg-x11-apps mtools pax oddjob sgpio genisoimage wodim abrt-gui compat-gcc-44 compat-gcc-44-g77 compat-gcc-34-c++ certmonger pam_krb5 krb5-workstation gnome-pilot rsh rsh-server tcp_wrappers libXmu certmonger perl-CGI audit mesa-libGLU-devel kexec-tools bridge-utils device-mapper-multipath vnc-server xorg-x11-server-Xnest xorg-x11-server-Xvfb libsane-hpaio imake rsh-server tftp postfix tcl-devel libsysfs OpenIPMI ipmitool tix binutils-devel libXt-devel ncurses-devel qt-devel zlib-devel gnuplot perl-Time-HiRes perl-DBI kernel-devel gcc glibc-devel libtool bison flex zlib-devel libstdc++-devel gcc-c++ tcl-devel tk rpm-build gcc-gfortran openldap-clients valgrind-devel nscd nss-pam-ldapd lapack lapack-devel hwloc xorg-x11-apps xterm libstdc++.i686 compat-gcc-34-g77.x86_64 dstat screen OpenIPMI OpenIPMI-tools cmake scons boost numpy postgresql-libs python-devel python-matplotlib scipy libXp libXp-devel libXpm libXpm-devel dapl-devel PyOpenGL fluxbox libhugetlbfs libhugetlbfs-utils dejavu-lgc-sans-fonts dejavu-lgc-sans-mono-fonts dejavu-lgc-serif-fonts htop freeglut-devel freeglut-devel.i686 mesa-libGLU.i686 libXv.i686 libXrender.i686 fontconfig.i686 glib2.i686 libSM.i686 libpng.i686 perl-DBD-Pg yp-tools ypbind
-    ssh root@192.168.70.$i yum install -y nagios-plugins-all nrpe collectl libcgroup mcelog dos2unix.x86_64 tofrodos.x86_64
+    ssh root@193.168.70.$i yum groupinstall -y client-mgmt-tools compat-libraries debugging basic-desktop desktop-debugging desktop-platform directory-client ftp-server fonts general-desktop graphical-admin-tools input-methods internet-applications internet-browser java-platform legacy-unix legacy-x nfs-file-server network-file-system-client office-suite print-client remote-desktop-clients server-platform server-policy web-server x11 kde-desktop
+    ssh root@193.168.70.$i yum install -y xorg-x11-twm xorg-x11-apps mtools pax oddjob sgpio genisoimage wodim abrt-gui compat-gcc-44 compat-gcc-44-g77 compat-gcc-34-c++ certmonger pam_krb5 krb5-workstation gnome-pilot rsh rsh-server tcp_wrappers libXmu certmonger perl-CGI audit mesa-libGLU-devel kexec-tools bridge-utils device-mapper-multipath vnc-server xorg-x11-server-Xnest xorg-x11-server-Xvfb libsane-hpaio imake rsh-server tftp postfix tcl-devel libsysfs OpenIPMI ipmitool tix binutils-devel libXt-devel ncurses-devel qt-devel zlib-devel gnuplot perl-Time-HiRes perl-DBI kernel-devel gcc glibc-devel libtool bison flex zlib-devel libstdc++-devel gcc-c++ tcl-devel tk rpm-build gcc-gfortran openldap-clients valgrind-devel nscd nss-pam-ldapd lapack lapack-devel hwloc xorg-x11-apps xterm libstdc++.i686 compat-gcc-34-g77.x86_64 dstat screen OpenIPMI OpenIPMI-tools cmake scons boost numpy postgresql-libs python-devel python-matplotlib scipy libXp libXp-devel libXpm libXpm-devel dapl-devel PyOpenGL fluxbox libhugetlbfs libhugetlbfs-utils dejavu-lgc-sans-fonts dejavu-lgc-sans-mono-fonts dejavu-lgc-serif-fonts htop freeglut-devel freeglut-devel.i686 mesa-libGLU.i686 libXv.i686 libXrender.i686 fontconfig.i686 glib2.i686 libSM.i686 libpng.i686 perl-DBD-Pg yp-tools ypbind
+    ssh root@193.168.70.$i yum install -y nagios-plugins-all nrpe collectl libcgroup mcelog dos2unix.x86_64 tofrodos.x86_64
     echo "optional Packages installation completed on node $i"
   done
 fi
@@ -150,9 +155,9 @@ mkdir -p /scratch-mstr
 # Compute nodes : setting local scratch directory as in the french cluster
 for i in {208..209}; do 
   # setup local scratch
-  ssh root@192.168.70.$i mkdir /scratch
-  ssh root@192.168.70.$i chmod 777 /scratch
-  ssh root@192.168.70.$i chmod +t /scratch
+  ssh root@193.168.70.$i mkdir /scratch
+  ssh root@193.168.70.$i chmod 777 /scratch
+  ssh root@193.168.70.$i chmod +t /scratch
 done
 
 
@@ -161,7 +166,7 @@ done
 # the /etc/hosts in the minicluster test was of the form 
 #    127.0.0.1 localhost.localdomain localhost4 localhost4.localdomain4
 #    ::1 localhost localhost.localdomain localhost6 localhost6.localdomain6
-#    192.168.70.209 toklap120
+#    193.168.70.209 toklap120
 
 # MUNGE AND SLURM USER CREATION on ALL NODES 
 
@@ -185,11 +190,11 @@ grep '1128' /etc/passwd
 
 # creating slurm and munge user in each of the COMPUTE NODES: 
 for i in {208..209}; do
-  scp ~/tmp.sh root@192.168.70.$i:~/
-  ssh root@192.168.70.$i bash ~/tmp.sh
+  scp ~/tmp.sh root@193.168.70.$i:~/
+  ssh root@193.168.70.$i bash ~/tmp.sh
   # checking 
-  ssh root@192.168.70.$i grep '1127' /etc/passwd
-  ssh root@192.168.70.$i grep '1128' /etc/passwd
+  ssh root@193.168.70.$i grep '1127' /etc/passwd
+  ssh root@193.168.70.$i grep '1128' /etc/passwd
 done
 
 
@@ -213,10 +218,10 @@ echo "Munge key creation completed"
 
 # propagate the created key to all other COMPUTE nodes: 
 for i in {208..209}; do
-  ssh root@192.168.70.$i yum install epel-release -y
-  ssh root@192.168.70.$i yum install munge munge-libs munge-devel -y
-  ssh root@192.168.70.$i rm -rf /etc/munge/munge.key # removing old key
-  scp /etc/munge/munge.key root@192.168.70.$i:/etc/munge
+  ssh root@193.168.70.$i yum install epel-release -y
+  ssh root@193.168.70.$i yum install munge munge-libs munge-devel -y
+  ssh root@193.168.70.$i rm -rf /etc/munge/munge.key # removing old key
+  scp /etc/munge/munge.key root@193.168.70.$i:/etc/munge
   echo "Munge installation and munge key transfer on node $i completed"
 done
 
@@ -237,8 +242,8 @@ bash tmp.sh
 echo "Master node munge service activated"
 # on COMPUTE NODES 
 for i in {208..209}; do
-  scp ~/tmp.sh root@192.168.70.$i:~/
-  ssh root@192.168.70.$i bash ~/tmp.sh
+  scp ~/tmp.sh root@193.168.70.$i:~/
+  ssh root@193.168.70.$i bash ~/tmp.sh
   echo "Compute node $i: munge service activated"
 done
 
@@ -247,14 +252,14 @@ echo "Checking if SLURM prerequisites packages are present"
 yum install rpm-build gcc openssl openssl-devel libssh2-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel gtk2-devel man2html libibmad libibumad perl-Switch perl-ExtUtils-MakeMaker -y
 echo "Master node: SLURM prerequisites completed"
 for i in {208..209}; do
-  ssh root@192.168.70.$i yum install rpm-build gcc openssl openssl-devel libssh2-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel gtk2-devel man2html libibmad libibumad perl-Switch perl-ExtUtils-MakeMaker -y
+  ssh root@193.168.70.$i yum install rpm-build gcc openssl openssl-devel libssh2-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel gtk2-devel man2html libibmad libibumad perl-Switch perl-ExtUtils-MakeMaker -y
   echo "Compute node $i: SLURM prerequisites completed"
 done
 
 yum install mariadb-server mariadb-devel -y
 echo "Master node: mariadb installation completed"
 for i in {208..209}; do
-  ssh root@192.168.70.$i yum install mariadb-server mariadb-devel -y
+  ssh root@193.168.70.$i yum install mariadb-server mariadb-devel -y
   echo "Compute node $i: mariadb installation completed"
 done
 
@@ -276,7 +281,7 @@ echo "sending Slurm RPMS to each of the compute nodes."
 mkdir ~/slurm_rpms
 mv rpmbuild/RPMS/x86_64/slurm*.rpm ~/slurm_rpms
 for i in {208..209}; do
-  scp -r ~/slurm_rpms root@192.168.70.$i:~/
+  scp -r ~/slurm_rpms root@193.168.70.$i:~/
 done
 echo "Slurm RPMS transfer to compute nodes completed."
 
@@ -302,17 +307,17 @@ cd ~
 
 for i in {208..209}; do
 # similar as master node but we don't install slurm database and slurm controller daemon    
-  ssh root@192.168.70.$i yum install mailx -y
-  ssh root@192.168.70.$i yum install -y slurm_rpms/slurm-17.11.7-1.el7*
-  ssh root@192.168.70.$i yum install -y slurm_rpms/slurm-perlapi-17.11.7-1.el7*  
-  ssh root@192.168.70.$i yum install -y slurm_rpms/slurm-contribs-17.11.7-1.el7*
-  ssh root@192.168.70.$i yum install -y slurm_rpms/slurm-devel-17.11.7-1.el7*
-  ssh root@192.168.70.$i yum install -y slurm_rpms/slurm-example-configs-17.11.7-1.el7*
-  ssh root@192.168.70.$i yum install -y slurm_rpms/slurm-libpmi-17.11.7-1.el7*
-  ssh root@192.168.70.$i yum install -y slurm_rpms/slurm-openlava-17.11.7-1.el7*
-  ssh root@192.168.70.$i yum install -y slurm_rpms/slurm-pam_slurm-17.11.7-1.el7*
-  ssh root@192.168.70.$i yum install -y slurm_rpms/slurm-slurmd-17.11.7-1.el7*  
-  ssh root@192.168.70.$i yum install -y slurm_rpms/slurm-torque-17.11.7-1.el7*
+  ssh root@193.168.70.$i yum install mailx -y
+  ssh root@193.168.70.$i yum install -y slurm_rpms/slurm-17.11.7-1.el7*
+  ssh root@193.168.70.$i yum install -y slurm_rpms/slurm-perlapi-17.11.7-1.el7*  
+  ssh root@193.168.70.$i yum install -y slurm_rpms/slurm-contribs-17.11.7-1.el7*
+  ssh root@193.168.70.$i yum install -y slurm_rpms/slurm-devel-17.11.7-1.el7*
+  ssh root@193.168.70.$i yum install -y slurm_rpms/slurm-example-configs-17.11.7-1.el7*
+  ssh root@193.168.70.$i yum install -y slurm_rpms/slurm-libpmi-17.11.7-1.el7*
+  ssh root@193.168.70.$i yum install -y slurm_rpms/slurm-openlava-17.11.7-1.el7*
+  ssh root@193.168.70.$i yum install -y slurm_rpms/slurm-pam_slurm-17.11.7-1.el7*
+  ssh root@193.168.70.$i yum install -y slurm_rpms/slurm-slurmd-17.11.7-1.el7*  
+  ssh root@193.168.70.$i yum install -y slurm_rpms/slurm-torque-17.11.7-1.el7*
   echo "Compute node $i: Slurm installation completed."
 done
 
@@ -323,8 +328,8 @@ tee slurm.conf << EOF
 # Put this file on all nodes of your cluster. 
 # See the slurm.conf man page for more information. 
 # 
-ControlMachine=toklap142 
-ControlAddr=192.168.70.206
+ControlMachine=alsenyPC1 
+ControlAddr=193.168.70.206
 #
 # additional suggestions from https://wiki.fysik.dtu.dk/niflheim/Slurm_configuration#reboot-option
 RebootProgram="/usr/sbin/reboot"
@@ -375,18 +380,18 @@ SlurmdLogFile=/var/log/slurm/slurmd.log
 # 
 # 
 # COMPUTE NODES
-NodeName=tokwor077 NodeAddr=192.168.70.208 CPUs=16 Sockets=1 CoresPerSocket=8 ThreadsPerCore=2 State=UNKNOWN
-NodeName=tokwor113 NodeAddr=192.168.70.209 CPUs=16 Sockets=1 CoresPerSocket=8 ThreadsPerCore=2 State=UNKNOWN
-NodeName=toklap142 NodeAddr=192.168.70.206 CPUs=8  Sockets=1 CoresPerSocket=4 ThreadsPerCore=2 State=UNKNOWN
-PartitionName=production Nodes=tokwor077,tokwor113 Default=YES MaxTime=INFINITE State=UP
-PartitionName=debug Nodes=toklap142 Default=YES MaxTime=INFINITE State=UP
+NodeName=workstation1 NodeAddr=193.168.70.208 CPUs=16 Sockets=1 CoresPerSocket=8 ThreadsPerCore=2 State=UNKNOWN
+NodeName=workstation2 NodeAddr=193.168.70.209 CPUs=16 Sockets=1 CoresPerSocket=8 ThreadsPerCore=2 State=UNKNOWN
+NodeName=alsenyPC1 NodeAddr=193.168.70.206 CPUs=8  Sockets=1 CoresPerSocket=4 ThreadsPerCore=2 State=UNKNOWN
+PartitionName=production Nodes=workstation1,workstation2 Default=YES MaxTime=INFINITE State=UP
+PartitionName=debug Nodes=alsenyPC1 Default=YES MaxTime=INFINITE State=UP
 EOF
 yes | cp -rf  slurm.conf /etc/slurm/
 echo "Master node : slurm.conf file created"
 
 # sending the slurm.conf file to each of the compute nodes 
 for i in {208..209}; do
-  scp /etc/slurm/slurm.conf root@192.168.70.$i:/etc/slurm
+  scp /etc/slurm/slurm.conf root@193.168.70.$i:/etc/slurm
   echo "Compute node $i: slurm.conf file transferred"
 done
 
@@ -408,7 +413,7 @@ echo "Master node : cgroup.conf file created"
 
 # sending the cgroup.conf file to each of the compute nodes 
 for i in {208..209}; do
-  scp /etc/slurm/cgroup.conf root@192.168.70.$i:/etc/slurm
+  scp /etc/slurm/cgroup.conf root@193.168.70.$i:/etc/slurm
   echo "Compute node $i: cgroup.conf file transferred"
 done
 
@@ -431,15 +436,15 @@ chown slurm: /var/spool/slurm
 chmod 755 /var/spool/slurm
 
 for i in {208..209}; do
-  ssh root@192.168.70.$i mkdir /var/run/slurm
-  ssh root@192.168.70.$i chown slurm: /var/run/slurm
-  ssh root@192.168.70.$i chmod 755 /var/run/slurm
-  ssh root@192.168.70.$i mkdir /var/log/slurm/
-  ssh root@192.168.70.$i chown slurm: /var/log/slurm/
-  ssh root@192.168.70.$i chmod 755 /var/log/slurm/
-  ssh root@192.168.70.$i mkdir /var/spool/slurm
-  ssh root@192.168.70.$i chown slurm: /var/spool/slurm
-  ssh root@192.168.70.$i chmod 755 /var/spool/slurm
+  ssh root@193.168.70.$i mkdir /var/run/slurm
+  ssh root@193.168.70.$i chown slurm: /var/run/slurm
+  ssh root@193.168.70.$i chmod 755 /var/run/slurm
+  ssh root@193.168.70.$i mkdir /var/log/slurm/
+  ssh root@193.168.70.$i chown slurm: /var/log/slurm/
+  ssh root@193.168.70.$i chmod 755 /var/log/slurm/
+  ssh root@193.168.70.$i mkdir /var/spool/slurm
+  ssh root@193.168.70.$i chown slurm: /var/spool/slurm
+  ssh root@193.168.70.$i chmod 755 /var/spool/slurm
 done
 
 echo "Slurm Directories permission are now OK"
@@ -453,7 +458,7 @@ sed -i -e 's/PIDFile=.*/PIDFile=\/var\/run\/slurm\/slurmd.pid/g' /usr/lib/system
 # on compute nodes : 
 for i in {208..209}; do
   replacement="/var/run/slurm/slurmd.pid" 
-  ssh root@192.168.70.$i sed -i -e 's@PIDFile=.*@PIDFile=replacement=@g' /usr/lib/systemd/system/slurmd.service
+  ssh root@193.168.70.$i sed -i -e 's@PIDFile=.*@PIDFile=replacement=@g' /usr/lib/systemd/system/slurmd.service
 done
 
 # on MASTER node : 
@@ -465,9 +470,9 @@ systemctl daemon-reload
 
 # on COMPUTE node : 
 for i in {208..209}; do
-  ssh root@192.168.70.$i systemctl enable slurmd.service
-  ssh root@192.168.70.$i systemctl start slurmd.service
-  ssh root@192.168.70.$i systemctl status slurmd.service
+  ssh root@193.168.70.$i systemctl enable slurmd.service
+  ssh root@193.168.70.$i systemctl start slurmd.service
+  ssh root@193.168.70.$i systemctl status slurmd.service
   echo "Compute node $i: Starting Slurm daemon"
 done
 
